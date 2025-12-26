@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Hub - Andrei</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    /* Reset and Core Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      /* CHANGE 1: Use min-height so it can grow if needed */
+      min-height: 100vh; 
+      /* CHANGE 2: Allow vertical scrolling if screen is small */
+      overflow-y: auto; 
+      overflow-x: hidden; /* Keep horizontal hidden */
+      
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      
+      background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #1cb5e0);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      
+      /* CHANGE 3: Add some padding for the top/bottom on mobile */
+      padding: 20px 0; 
+    }
+
+    /* Background Animation Keyframes */
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Floating bubbles for atmosphere */
+    .bubble {
+      position: absolute;
+      bottom: -100px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: floatUp 10s linear infinite;
+      z-index: -1;
+    }
+    
+    @keyframes floatUp {
+      0% { transform: translateY(0); opacity: 0; }
+      50% { opacity: 0.6; }
+      100% { transform: translateY(-120vh); opacity: 0; }
+    }
+
+    /* Header Styling */
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 50px;
+      text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      letter-spacing: 1px;
+    }
+    
+    h1 span {
+      color: #4facfe; /* Highlight 'Andrei' */
+    }
+
+    /* Container for Cards */
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      padding: 20px;
+      z-index: 10;
+      /* CHANGE 4: Ensure container fits inside the scrollable area */
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    /* Glassmorphism Card Style */
+    .card {
+      width: 280px;
+      height: 350px;
+      /* The Glass Effect */
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Card Content */
+    .emoji {
+      font-size: 80px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+      transition: transform 0.3s ease;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .card-desc {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Hover Effects */
+    .card:hover {
+      transform: translateY(-15px) scale(1.03);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 15px 40px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    .card:hover .emoji {
+      transform: scale(1.2) rotate(10deg);
+    }
+
+    /* A subtle shine effect on hover */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .card:hover::before {
+      left: 100%;
+    }
+
+    /* Responsive Design for Mobile */
+    @media (max-width: 900px) {
+      .container {
+        flex-direction: column;
+      }
+      .card {
+        width: 100%;
+        max-width: 320px;
+        height: 120px;
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 0 25px;
+      }
+      .emoji {
+        font-size: 50px;
+        margin-bottom: 0;
+        margin-right: 20px;
+      }
+      .text-wrap {
+        text-align: left;
+      }
+      h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Salut, <span>Andrei</span>! Ce jucăm?</h1>
+
+ <div class="container">
+    
+    <div class="card" onclick="location.href='game.html?character=catol'">
+      <div class="emoji">🐟</div>
+      <div class="text-wrap">
+        <div class="card-title">Cu Catol</div>
+        <div class="card-desc">Prinde peștele împreună cu Catol.</div>
+      </div>
+    </div>
+
+    <div class="card" onclick="location.href='game.html?character=vlad'">
+      <div class="emoji">🏆</div>
+      <div class="text-wrap">
+        <div class="card-title">Cu Vlad</div>
+        <div class="card-desc">Competiție de pescuit cu Vlad.</div>
+      </div>
+    </div>
+
+    <div class="card" onclick="location.href='game.html?character=solo'">
+      <div class="emoji">☕</div>
+      <div class="text-wrap">
+        <div class="card-title">Solo & Cafea</div>
+        <div class="card-desc">Relaxare, doar tu și cafeluța ta.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function createBubbles() {
+      const bubbleCount = 15;
+      for (let i = 0; i < bubbleCount; i++) {
+        let bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        
+        let size = Math.random() * 60 + 20 + 'px';
+        bubble.style.width = size;
+        bubble.style.height = size;
+        bubble.style.left = Math.random() * 100 + 'vw';
+        bubble.style.animationDuration = Math.random() * 5 + 5 + 's';
+        bubble.style.animationDelay = Math.random() * 5 + 's';
+        
+        document.body.appendChild(bubble);
+      }
+    }
+    createBubbles();
+  </script>
+
+</body>
+</html>
