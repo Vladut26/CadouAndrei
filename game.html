@@ -1,204 +1,284 @@
 <!DOCTYPE html>
 <html lang="ro">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="robots" content="noindex">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fish Catch - Andrei</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    /* Global Box Sizing - prevents padding from breaking layout */
-    * {
-      box-sizing: border-box; 
-    }
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fish Catch - Andrei</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Global Box Sizing - prevents padding from breaking layout */
+        * {
+            box-sizing: border-box;
+        }
 
-    /* --- 1. CORE LAYOUT & BACKGROUND --- */
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden; /* Keep hidden for game to prevent scrolling while playing */
-      font-family: 'Poppins', sans-serif;
-      color: white;
-      
-      background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #1cb5e0);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
-      
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      /* Prevent text selection on double tap */
-      user-select: none; 
-      -webkit-user-select: none;
-    }
+        /* --- 1. CORE LAYOUT & BACKGROUND --- */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* Keep hidden for game to prevent scrolling while playing */
+            font-family: 'Poppins', sans-serif;
+            color: white;
 
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+            background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #1cb5e0);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
 
-    /* Floating Bubbles Styles */
-    .bubble {
-      position: absolute;
-      bottom: -100px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      animation: floatUp 10s linear infinite;
-      z-index: -1; 
-      pointer-events: none;
-    }
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            /* Prevent text selection on double tap */
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
-    @keyframes floatUp {
-      0% { transform: translateY(0); opacity: 0; }
-      50% { opacity: 0.6; }
-      100% { transform: translateY(-120vh); opacity: 0; }
-    }
+        /* Default: Hide warning, Show game */
+        /* PORTRAIT WARNING OVERLAY STYLE */
+        #portrait-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #0f2027, #2c5364);
+            /* Opaque background */
+            z-index: 9999;
+            /* on top of everything */
+            display: none;
+            /* Hidden by default */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
 
-    /* --- 2. GLASS NAVBAR --- */
-    #navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 60px;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-      z-index: 100;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    }
+        /* Media Query remains the same */
+        @media (orientation: portrait) {
+            #portrait-warning {
+                display: flex;
+            }
 
-    #navbar button {
-      padding: 8px 16px; /* Slightly smaller padding for mobile */
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 30px;
-      cursor: pointer;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 600;
-      font-size: 0.75rem; /* Slightly smaller font for mobile */
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      transition: all 0.3s ease;
-    }
+            #game-container {
+                display: none;
+            }
+        }
 
-    /* --- 3. GAME CANVAS --- */
-    canvas {
-      display: block;
-      border: 2px solid rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
-      box-shadow: 0 0 50px rgba(0, 0, 0, 0.6); 
-      background-color: rgba(0, 0, 0, 0.2);
-      margin-top: 60px;
-      cursor: none;
-      /* Responsive constraints */
-      max-width: 95vw;
-      max-height: 80vh; /* Leave room for browser bars */
-    }
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
 
-    /* --- 4. GLASS MODAL --- */
-    #infoModal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
-      display: none; 
-      justify-content: center;
-      align-items: center;
-      z-index: 200;
-      animation: fadeIn 0.3s ease;
-    }
+            50% {
+                background-position: 100% 50%;
+            }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
 
-    #infoBox {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-      padding: 30px;
-      border-radius: 20px;
-      
-      /* RESPONSIVE WIDTH FIX */
-      width: 90%; 
-      max-width: 320px;
-      text-align: center;
-    }
+        /* Floating Bubbles Styles */
+        .bubble {
+            position: absolute;
+            bottom: -100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: floatUp 10s linear infinite;
+            z-index: -1;
+            pointer-events: none;
+        }
 
-    #infoBox h3 {
-      margin-top: 0;
-      color: #4facfe;
-      font-size: 1.5rem;
-      margin-bottom: 15px;
-    }
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 0;
+            }
 
-    #infoBox p {
-      line-height: 1.6;
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 0.9rem;
-    }
+            50% {
+                opacity: 0.6;
+            }
 
-    .heart {
-      color: #ff4b4b;
-      display: inline-block;
-      animation: heartbeat 1.5s infinite;
-    }
+            100% {
+                transform: translateY(-120vh);
+                opacity: 0;
+            }
+        }
 
-    @keyframes heartbeat {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.3); }
-    }
-  </style>
+        /* --- 2. GLASS NAVBAR --- */
+        #navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        #navbar button {
+            padding: 8px 16px;
+            /* Slightly smaller padding for mobile */
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 0.75rem;
+            /* Slightly smaller font for mobile */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        /* --- 3. GAME CANVAS --- */
+        canvas {
+            display: block;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.2);
+            margin-top: 60px;
+            cursor: none;
+            /* Responsive constraints */
+            max-width: 95vw;
+            max-height: 80vh;
+            /* Leave room for browser bars */
+        }
+
+        /* --- 4. GLASS MODAL --- */
+        #infoModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        #infoBox {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            border-radius: 20px;
+
+            /* RESPONSIVE WIDTH FIX */
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        #infoBox h3 {
+            margin-top: 0;
+            color: #4facfe;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        #infoBox p {
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+        }
+
+        .heart {
+            color: #ff4b4b;
+            display: inline-block;
+            animation: heartbeat 1.5s infinite;
+        }
+
+        @keyframes heartbeat {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-  <div id="navbar">
-    <button onclick="goHome()">Home</button>
-    <button onclick="restartGame()">Restart</button>
-    <button onclick="openInfo()">Info</button>
-  </div>
-
-  <canvas id="game"></canvas>
-
-  <div id="infoModal" onclick="closeInfo()">
-    <div id="infoBox">
-      <h3>Prinde peștele</h3>
-      <p>Acest joc e făcut special pentru Andrei, Iubirea Mea <span class="heart">❤️</span></p>
-      <br>
-      <p style="font-size: 0.8rem; opacity: 0.8;">Apasă <b>ESC</b> pentru pauză.</p>
-      <p style="font-size: 0.7rem; margin-top: 20px; opacity: 0.5;">(atinge oriunde pentru a închide)</p>
+    <div id="portrait-warning">
+        <h1 style="font-size: 50px;">🔄</h1>
+        <h2>Te rog întoarce telefonul</h2>
+        <p>Jocul merge doar în Landscape.</p>
     </div>
-  </div>
 
-  <script>
-    const bubbleCount = 10;
-    for (let i = 0; i < bubbleCount; i++) {
-      let bubble = document.createElement('div');
-      bubble.className = 'bubble';
-      let size = Math.random() * 60 + 20 + 'px';
-      bubble.style.width = size;
-      bubble.style.height = size;
-      bubble.style.left = Math.random() * 100 + 'vw';
-      bubble.style.animationDuration = Math.random() * 5 + 5 + 's';
-      bubble.style.animationDelay = Math.random() * 5 + 's';
-      document.body.appendChild(bubble);
-    }
-  </script>
+    <div id="game-container">
+        
+        <div id="navbar">
+            <button onclick="goHome()">Home</button>
+            <button onclick="restartGame()">Restart</button>
+            <button onclick="openInfo()">Info</button>
+        </div>
 
-  <script src="game.js"></script>
+        <canvas id="game"></canvas>
+
+    </div>
+
+    <div id="infoModal" onclick="closeInfo()">
+        <div id="infoBox">
+            <h3>Prinde peștele</h3>
+            <p>Acest joc e făcut special pentru Andrei, Iubirea Mea <span class="heart">❤️</span></p>
+            <br>
+            <p style="font-size: 0.8rem; opacity: 0.8;">Apasă <b>ESC</b> pentru pauză.</p>
+            <p style="font-size: 0.7rem; margin-top: 20px; opacity: 0.5;">(atinge oriunde pentru a închide)</p>
+        </div>
+    </div>
+
+    <script>
+        const bubbleCount = 10;
+        for (let i = 0; i < bubbleCount; i++) {
+            let bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            let size = Math.random() * 60 + 20 + 'px';
+            bubble.style.width = size;
+            bubble.style.height = size;
+            bubble.style.left = Math.random() * 100 + 'vw';
+            bubble.style.animationDuration = Math.random() * 5 + 5 + 's';
+            bubble.style.animationDelay = Math.random() * 5 + 's';
+            document.body.appendChild(bubble);
+        }
+    </script>
+
+    <script src="game.js"></script>
 
 </body>
 </html>
