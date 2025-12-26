@@ -5,14 +5,20 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 /* ==========================
-   CONSTANTS
+   CONSTANTS & VARIABLES
 ========================== */
+// Base sizes (Laptop view)
+const BASE_FISH_SIZE = 100;
+const BASE_NET_WIDTH = 180;
+const BASE_NET_HEIGHT = 160;
 const LEFTSIDE_COL_WIDTH = 50;
 const RIGHTSIDE_COL_WIDTH = 50;
 
-const FISH_SIZE = 100;
-const NET_WIDTH = 180;
-const NET_HEIGHT = 160;
+// Dynamic sizes (will change on resize)
+let fishSize = BASE_FISH_SIZE;
+let netWidth = BASE_NET_WIDTH;
+let netHeight = BASE_NET_HEIGHT;
+let globalScale = 1; // 1 for laptop, < 1 for mobile
 
 const BASE_FISH_SPEED = 3;
 
@@ -24,8 +30,6 @@ let fishSpeed = BASE_FISH_SPEED;
 let paused = false;
 const MAX_HEARTS = 3;
 let hearts = MAX_HEARTS;
-
-// NEW: Array to store floating text particles
 let particles = [];
 
 /* ==========================
@@ -33,7 +37,7 @@ let particles = [];
 ========================== */
 let fish = {
   x: 0,
-  y: -FISH_SIZE,
+  y: -BASE_FISH_SIZE,
   img: null,
   value: 0 
 };
@@ -46,28 +50,41 @@ let net = {
   y: 0
 };
 
-// document.body.style.cursor = "none";
-
 /* ==========================
-   RESIZE
+   RESIZE & RESPONSIVENESS
 ========================== */
 function resize() {
-  canvas.width = window.innerWidth - 20;
-  canvas.height = window.innerHeight - 70;
+  const container = document.getElementById('game-container');
+  // Use container dimensions to fit perfectly within the div
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+
+  // Determine Scale Factor
+  // If width is less than 900px (Mobile landscape), scale down
+  if (canvas.width < 900) {
+      // Calculate a ratio based on 900px, but clamp it so it doesn't get too tiny
+      globalScale = Math.max(0.5, canvas.width / 1100); 
+  } else {
+      globalScale = 1; // Laptop/Desktop remains perfect
+  }
+
+  // Update game object dimensions based on scale
+  fishSize = BASE_FISH_SIZE * globalScale;
+  netWidth = BASE_NET_WIDTH * globalScale;
+  netHeight = BASE_NET_HEIGHT * globalScale;
 }
+
 window.addEventListener("resize", resize);
+// Call resize immediately after load
+window.addEventListener("load", resize);
 resize();
 
-/* ==========================
-   IMAGES
-========================== */
 /* ==========================
    IMAGES
 ========================== */
 const pond = new Image();
 pond.src = "assets/pondlandscape.png";
 
-// You need a boot.png in assets
 const bootImg = new Image();
 bootImg.src = "assets/boot.png"; 
 
@@ -81,33 +98,21 @@ const fishImages = ["beta.png", "carp.png", "grasscarp.png", "catfish.png"].map(
 const netImg = new Image();
 netImg.src = "assets/net1bg.png";
 
-/* ----------------------------------------------------
-   DYNAMIC CHARACTER LOADING
-   This reads the ?character=... from the URL
----------------------------------------------------- */
+// Character Loading
 const urlParams = new URLSearchParams(window.location.search);
-const characterMode = urlParams.get('character'); // 'catol', 'vlad', or 'solo'
+const characterMode = urlParams.get('character');
 
 let selectedHumanFiles = [];
-
 if (characterMode === 'vlad') {
-    // IMAGES FOR VLAD GAME
-    // Make sure you have these files in your assets folder!
     selectedHumanFiles = ["vlad1.png", "vlad2.png", "vlad3.png", "vlad4.png"];
-} 
-else if (characterMode === 'catol') {
-    // IMAGES FOR CATOL GAME
+} else if (characterMode === 'catol') {
     selectedHumanFiles = ["catol1.png", "catol2.png", "catol3.png", "catol4.png"];
-} 
-else {
-    // DEFAULT / SOLO GAME (Original images)
+} else {
     selectedHumanFiles = ["andrei1.png", "andrei2.png", "andrei3.png", "andrei4.png"];
 }
 
-// Load the selected images
 const humans = selectedHumanFiles.map(src => {
   const img = new Image();
-  // If the file doesn't exist, this might show nothing, so ensure filenames are correct
   img.src = "assets/" + src;
   return img;
 });
@@ -115,13 +120,16 @@ const humans = selectedHumanFiles.map(src => {
 /* ==========================
    INPUTS
 ========================== */
+// Mouse
 canvas.addEventListener("mousemove", e => {
   if (paused) return;
   const rect = canvas.getBoundingClientRect();
-  net.x = (e.clientX - rect.left) - NET_WIDTH / 2;
-  net.y = (e.clientY - rect.top) - NET_HEIGHT / 2;
+  // Center net on mouse
+  net.x = (e.clientX - rect.left) - netWidth / 2;
+  net.y = (e.clientY - rect.top) - netHeight / 2;
 });
 
+// Keyboard
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     if(paused) {
@@ -132,13 +140,15 @@ document.addEventListener("keydown", e => {
   }
 });
 
+// Touch
 canvas.addEventListener("touchmove", e => {
   if (paused) return;
   e.preventDefault(); 
   const rect = canvas.getBoundingClientRect();
   const touch = e.touches[0]; 
-  net.x = (touch.clientX - rect.left) - NET_WIDTH / 2;
-  net.y = (touch.clientY - rect.top) - NET_HEIGHT / 2;
+  // Center net on touch
+  net.x = (touch.clientX - rect.left) - netWidth / 2;
+  net.y = (touch.clientY - rect.top) - netHeight / 2;
 }, { passive: false });
 
 /* ==========================
@@ -146,68 +156,62 @@ canvas.addEventListener("touchmove", e => {
 ========================== */
 function resetFish() {
   const minX = LEFTSIDE_COL_WIDTH;
-  const maxX = canvas.width - RIGHTSIDE_COL_WIDTH - FISH_SIZE;
+  const maxX = canvas.width - RIGHTSIDE_COL_WIDTH - fishSize;
 
   fish.x = minX + Math.random() * (maxX - minX);
-  fish.y = -FISH_SIZE;
+  fish.y = -fishSize; // Start above screen
 
   const rand = Math.random(); 
 
   if (rand < 0.50) {
-      // Carp (+1)
       fish.img = fishImages[1]; 
       fish.value = 1;
   } else if (rand < 0.75) {
-      // Grasscarp (+3)
       fish.img = fishImages[2]; 
       fish.value = 3;
   } else if (rand < 0.90) {
-      // Catfish (+3)
       fish.img = fishImages[3]; 
       fish.value = 3;
   } else {
-      // Beta (+5)
       fish.img = fishImages[0]; 
       fish.value = 5;
   }
 }
 
 function getHumanImage() {
-  if (score >= 50) return humans[3];
-  if (score >= 30) return humans[2];
-  if (score >= 15) return humans[1];
+  if (score >= 100) return humans[3];
+  if (score >= 50) return humans[2];
+  if (score >= 20) return humans[1];
   return humans[0];
 }
 
-// NEW: Function to create a floating text particle
 function createFloatingText(x, y, points) {
-    let color = "#ffffff"; // Default white
-    if (points === 5) color = "#ffd700"; // Gold for rare fish
-    else if (points === 3) color = "#4facfe"; // Blue for mid-tier
+    let color = "#ffffff";
+    if (points === 5) color = "#ffd700";
+    else if (points === 3) color = "#4facfe";
 
     particles.push({
         x: x,
         y: y,
         text: "+" + points,
         color: color,
-        life: 40, // How many frames it lasts
-        speedY: 2 // How fast it floats up
+        life: 40,
+        speedY: 2
     });
 }
 
 function checkCatch() {
+  // Simple AABB Collision Detection
+  // Note: Using dynamic fishSize/netWidth variables now
   const hit =
-    fish.x + FISH_SIZE > net.x &&
-    fish.x < net.x + NET_WIDTH &&
-    fish.y + FISH_SIZE > net.y &&
-    fish.y < net.y + NET_HEIGHT;
+    fish.x + fishSize > net.x &&
+    fish.x < net.x + netWidth &&
+    fish.y + fishSize > net.y &&
+    fish.y < net.y + netHeight;
 
   if (hit) {
     score += fish.value;
-    
-    // Trigger floating text visual
-    createFloatingText(fish.x + FISH_SIZE/2, fish.y, fish.value);
-    
+    createFloatingText(fish.x + fishSize/2, fish.y, fish.value);
     fishSpeed += 0.2;
     resetFish();
   }
@@ -221,35 +225,46 @@ function drawBackground() {
 }
 
 function drawUI() {
-  const startX = 30;
+  // Scale UI positions and font sizes
+  const startX = 30 * globalScale; 
+  const heartSpacing = 45 * globalScale;
+  const heartY = 60 * globalScale;
+  const scoreY = 110 * globalScale;
+  const avatarY = 220 * globalScale;
+  
+  // Font sizes
+  const heartSize = Math.floor(40 * globalScale);
+  const scoreSize = Math.floor(30 * globalScale);
+  const avatarW = 140 * globalScale;
+  const avatarH = 240 * globalScale;
 
   /* ---------- HEARTS ---------- */
   ctx.save(); 
-  ctx.font = "40px 'Poppins', sans-serif"; 
+  ctx.font = `${heartSize}px 'Poppins', sans-serif`; 
   ctx.fillStyle = "#ff4b4b"; 
   ctx.shadowColor = "#ff0000"; 
   ctx.shadowBlur = 20; 
   for (let i = 0; i < hearts; i++) {
-    ctx.fillText("❤", startX + i * 45, 60);
+    ctx.fillText("❤", startX + i * heartSpacing, heartY);
   }
   ctx.restore(); 
 
   /* ---------- SCORE ---------- */
   ctx.save();
-  ctx.font = "600 30px 'Poppins', sans-serif"; 
+  ctx.font = `600 ${scoreSize}px 'Poppins', sans-serif`; 
   ctx.fillStyle = "#ffffff"; 
   ctx.shadowColor = "#4facfe"; 
   ctx.shadowBlur = 15;
-  ctx.fillText("Score: " + score, startX, 110);
+  ctx.fillText("Score: " + score, startX, scoreY);
   ctx.restore();
 
   /* ---------- HUMAN ---------- */
-  ctx.drawImage(getHumanImage(), startX, 220, 140, 240);
+  ctx.drawImage(getHumanImage(), startX, avatarY, avatarW, avatarH);
 
-  /* ---------- NEW: DRAW PARTICLES ---------- */
+  /* ---------- PARTICLES ---------- */
   ctx.save();
-  ctx.font = "bold 28px sans-serif";
-  ctx.shadowColor = "black"; // Outline for visibility
+  ctx.font = `bold ${Math.floor(28 * globalScale)}px sans-serif`;
+  ctx.shadowColor = "black";
   ctx.shadowBlur = 4;
   
   for (let i = 0; i < particles.length; i++) {
@@ -257,12 +272,9 @@ function drawUI() {
       ctx.fillStyle = p.color;
       ctx.fillText(p.text, p.x, p.y);
       
-      // Update particle physics here
-      p.y -= p.speedY; // Move up
-      p.life--;        // Reduce life
+      p.y -= p.speedY;
+      p.life--;       
   }
-  
-  // Remove dead particles from array
   particles = particles.filter(p => p.life > 0);
   ctx.restore();
 
@@ -276,7 +288,8 @@ function drawUI() {
     ctx.shadowColor = "white";
     ctx.shadowBlur = 10;
     ctx.fillStyle = "white";
-    ctx.font = "bold 48px 'Poppins', sans-serif";
+    // Scale Game Over text too
+    ctx.font = `bold ${Math.floor(48 * globalScale)}px 'Poppins', sans-serif`;
     ctx.textAlign = "center"; 
     
     ctx.fillText(
@@ -295,7 +308,7 @@ function drawUI() {
     ctx.shadowColor = "#4facfe";
     ctx.shadowBlur = 20;
     ctx.fillStyle = "white";
-    ctx.font = "bold 60px 'Poppins', sans-serif";
+    ctx.font = `bold ${Math.floor(60 * globalScale)}px 'Poppins', sans-serif`;
     ctx.textAlign = "center";
     ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
     ctx.restore();
@@ -304,10 +317,12 @@ function drawUI() {
 
 function drawGame() {
   if (fish.img) {
-    ctx.drawImage(fish.img, fish.x, fish.y, FISH_SIZE, FISH_SIZE);
+    // Draw fish with dynamic size
+    ctx.drawImage(fish.img, fish.x, fish.y, fishSize, fishSize);
   }
   if (!paused && hearts > 0) {
-    ctx.drawImage(netImg, net.x, net.y, NET_WIDTH, NET_HEIGHT);
+    // Draw net with dynamic size
+    ctx.drawImage(netImg, net.x, net.y, netWidth, netHeight);
   }
 }
 
@@ -344,7 +359,7 @@ function restartGame() {
   fishSpeed = BASE_FISH_SPEED;
   hearts = MAX_HEARTS;
   paused = false;
-  particles = []; // Clear floating text on restart
+  particles = [];
   resetFish();
 }
 
